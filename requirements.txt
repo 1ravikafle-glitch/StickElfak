@@ -1,0 +1,21 @@
+# Core
+pyyaml
+python-dotenv
+
+# TTS (adapt to match your existing IndexTTS-2-CPU setup)
+# torch (CPU build)
+# indextts  (or your local wrapper)
+
+# Rendering
+moviepy
+ffmpeg-python
+Pillow
+
+# Publishing — official platform SDKs
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+requests   # used for Facebook Graph API + TikTok Content Posting API calls
+
+# Utilities
+tqdm
