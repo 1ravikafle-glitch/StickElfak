@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AICOS — Compare &amp; Explain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151b;
+    --panel:#1a1f28;
+    --line:#2a3038;
+    --text:#e8ecf1;
+    --muted:#8b95a5;
+    --accent:#2fd9e8;
+    --a-color:#e76f51;
+    --b-color:#4d8fa6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif;
+    display:flex; flex-direction:column;
+  }
+  header{
+    padding:28px 40px 16px; border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em;
+    color:var(--accent); text-transform:uppercase; margin:0 0 6px;
+  }
+  h1{ margin:0; font-size:26px; font-weight:700; }
+  header p{ margin:8px 0 0; color:var(--muted); font-size:14px; max-width:640px; }
+
+  main{ flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:0; }
+  @media (max-width: 900px){ main{ grid-template-columns: 1fr; } }
+
+  .panel{ padding:32px 40px; }
+  .panel + .panel{ border-left:1px solid var(--line); }
+  @media (max-width: 900px){ .panel + .panel{ border-left:none; border-top:1px solid var(--line);} }
+
+  label{ display:block; font-size:12px; font-family:'JetBrains Mono',monospace;
+         color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin:20px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input[type=text], textarea{
+    width:100%; background:#0f1216; border:1px solid var(--line); border-radius:8px;
+    color:var(--text); padding:12px 14px; font-family:'Inter',sans-serif; font-size:14px;
+  }
+  textarea{ min-height:220px; resize:vertical; font-family:'JetBrains Mono',monospace; line-height:1.6; font-size:13px;}
+  input[type=text]:focus, textarea:focus{ outline:2px solid var(--accent); border-color:var(--accent); }
+
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .swatch-a{ border-left:3px solid var(--a-color); padding-left:10px; }
+  .swatch-b{ border-left:3px solid var(--b-color); padding-left:10px; }
+
+  .hint{ color:var(--muted); font-size:12px; margin-top:6px; line-height:1.5; }
+  .hint code{ background:#0f1216; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono',monospace;}
+
+  button{
+    margin-top:26px; width:100%; padding:14px; border:none; border-radius:8px;
+    background:var(--accent); color:#0a1418; font-weight:700; font-size:15px;
+    cursor:pointer; font-family:'JetBrains Mono',monospace; letter-spacing:.03em;
+  }
+  button:disabled{ background:#33424a; color:#7c8790; cursor:not-allowed; }
+
+  .status{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--muted); margin-top:14px; min-height:20px; }
+  .status.err{ color:#f08a7a; }
+  .status.ok{ color:var(--accent); }
+
+  .preview{
+    border:1px dashed var(--line); border-radius:12px; aspect-ratio:9/16; max-width:320px;
+    display:flex; align-items:center; justify-content:center; color:var(--muted);
+    font-size:13px; margin-top:8px; overflow:hidden; background:#0f1216;
+  }
+  .preview video{ width:100%; height:100%; object-fit:cover; }
+  a.download{ display:inline-block; margin-top:14px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:13px; text-decoration:none; border-bottom:1px solid var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">AICOS · local</p>
+    <h1>Compare &amp; Explain — video generator</h1>
+    <p>Give it a topic, two things being compared, and a line-by-line script. It renders a 9:16 short with synced captions, comparison cards, and a narrator overlay — all on your machine.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label for="topic">Topic</label>
+      <input type="text" id="topic" placeholder="Cookie vs Cache">
+
+      <div class="row">
+        <div>
+          <label class="swatch-a" for="itemA">Item A</label>
+          <input type="text" id="itemA" placeholder="Cookie">
+        </div>
+        <div>
+          <label class="swatch-b" for="itemB">Item B</label>
+          <input type="text" id="itemB" placeholder="Cache">
+        </div>
+      </div>
+
+      <label for="script">Script</label>
+      <textarea id="script" placeholder="A: Cookie this is
+A: to remember who
+B: Cache this is
+B: to remember what a
+B: website like images
+B: just makes pages"></textarea>
+      <p class="hint">One line per beat. Prefix a line with <code>A:</code> or <code>B:</code> to show that item's card and narrate that line about it. Unprefixed lines narrate with no card change.</p>
+
+      <button id="genBtn">Generate video</button>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="panel">
+      <label>Preview</label>
+      <div class="preview" id="previewBox">nothing rendered yet</div>
+      <div id="downloadWrap"></div>
+    </section>
+  </main>
+
+<script>
+const genBtn = document.getElementById('genBtn');
+const statusEl = document.getElementById('status');
+const previewBox = document.getElementById('previewBox');
+const downloadWrap = document.getElementById('downloadWrap');
+
+function setStatus(text, cls){
+  statusEl.textContent = text;
+  statusEl.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+async function poll(jobId){
+  const res = await fetch('/api/status/' + jobId);
+  const data = await res.json();
+  if(data.status === 'running'){
+    setStatus('Rendering… (TTS, captions, compositing)');
+    setTimeout(() => poll(jobId), 1500);
+  } else if(data.status === 'done'){
+    setStatus('Done.', 'ok');
+    const videoUrl = '/api/download/' + jobId;
+    previewBox.innerHTML = '<video controls src="' + videoUrl + '"></video>';
+    downloadWrap.innerHTML = '<a class="download" href="' + videoUrl + '" download>Download .mp4</a>';
+    genBtn.disabled = false;
+  } else {
+    setStatus('Failed: ' + (data.error || 'unknown error'), 'err');
+    genBtn.disabled = false;
+  }
+}
+
+genBtn.addEventListener('click', async () => {
+  const topic = document.getElementById('topic').value;
+  const item_a = document.getElementById('itemA').value;
+  const item_b = document.getElementById('itemB').value;
+  const script = document.getElementById('script').value;
+
+  if(!script.trim()){
+    setStatus('Add a script first.', 'err');
+    return;
+  }
+
+  genBtn.disabled = true;
+  previewBox.innerHTML = 'nothing rendered yet';
+  downloadWrap.innerHTML = '';
+  setStatus('Starting…');
+
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({topic, item_a, item_b, script})
+  });
+  const data = await res.json();
+  if(data.error){
+    setStatus('Error: ' + data.error, 'err');
+    genBtn.disabled = false;
+    return;
+  }
+  poll(data.job_id);
+});
+</script>
+</body>
+</html>

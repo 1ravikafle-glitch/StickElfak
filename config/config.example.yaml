@@ -1,0 +1,33 @@
+# Copy this to config/config.yaml and fill in. config.yaml is gitignored —
+# never commit real credentials or tokens.
+
+video:
+  resolution: [1080, 1920]   # 9:16
+  fps: 30
+  max_duration_sec: 60
+
+style:
+  background_asset: assets/backgrounds/paper_texture.mp4
+  font: assets/fonts/your-bold-font.ttf
+  accent_color: "#2FD9E8"
+  character:
+    default_pose: assets/characters/idle_pose.png
+
+tts:
+  engine: indextts2_cpu
+  voice: default
+  language: en   # or "ne" for Nepali
+
+publishing:
+  youtube:
+    enabled: true
+    credentials_path: config/credentials/youtube_client_secret.json
+    token_path: config/credentials/youtube_token.json
+  facebook:
+    enabled: true
+    page_id: "YOUR_PAGE_ID"
+    page_access_token_path: config/credentials/facebook_page_token.txt
+  tiktok:
+    enabled: true
+    access_token_path: config/credentials/tiktok_token.txt
+    app_audit_status: unaudited   # change to "approved" once TikTok approves direct posting
